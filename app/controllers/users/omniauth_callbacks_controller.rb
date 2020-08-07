@@ -1,30 +1,31 @@
 # frozen_string_literal: true
 
 class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
-  # You should configure your model like this:
-  # devise :omniauthable, omniauth_providers: [:twitter]
+  # SNS認証時に呼ばれるコールバック関数名が決まっている
+  def facebook
+    authorization
+  end
 
-  # You should also create an action method in this controller like this:
-  # def twitter
-  # end
+  def google_oauth2
+    authorization
+  end
 
-  # More info at:
-  # https://github.com/heartcombo/devise#omniauth
+  def failure
+    redirect_to root_path
+  end
 
-  # GET|POST /resource/auth/twitter
-  # def passthru
-  #   super
-  # end
+  private
 
-  # GET|POST /users/auth/twitter/callback
-  # def failure
-  #   super
-  # end
+  def authorization
+    # APIから受け取ったレスポンスがrequest.env["omniauth.auth"]という変数に入る
+    # DB操作を行うメソッドUser.from_omniauthを仮で作り、変数を渡す。
+    @user = User.from_omniauth(request.env["omniauth.auth"])
 
-  # protected
-
-  # The path used when OmniAuth fails
-  # def after_omniauth_failure_path_for(scope)
-  #   super(scope)
-  # end
+    # ＠userが保存済みで無い場合(新規登録する場合)、＠userという変数をそのまま新規登録のviewsで利用するためにrenderを使用する。
+    if @user.persisted? #ユーザー情報が登録済みなので、新規登録ではなくログイン処理を行う
+      sign_in_and_redirect @user, event: :authentication
+    else #ユーザー情報が未登録なので、新規登録画面へ遷移する
+      render template: 'devise/registrations/new'
+    end
+  end
 end
