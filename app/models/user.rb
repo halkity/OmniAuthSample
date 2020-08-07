@@ -15,7 +15,7 @@ class User < ApplicationRecord
 
   def self.from_omniauth(auth)  # authにはAPIから受け取ったレスポンスを代入
     sns = SnsCredential.where(provider: auth.provider, uid: auth.uid).first_or_create
-    
+
     # sns認証したことがあればアソシエーションで取得
     # 無ければemailでユーザー検索して取得orビルド(保存はしない)
     user = sns.user || User.where(email: auth.info.email).first_or_initialize(
@@ -27,7 +27,7 @@ class User < ApplicationRecord
       sns.user = user
       sns.save
     end
-    user
+    { user: user, sns: sns }
   end
 
 
